@@ -1,0 +1,16 @@
+FROM golang:1.22-alpine
+
+WORKDIR /app
+
+COPY . .
+
+RUN go mod download
+
+RUN go build -o /main
+
+EXPOSE 8000
+
+# Create a volume for the uploads directory
+VOLUME /app/uploads
+
+CMD ["/main"]
