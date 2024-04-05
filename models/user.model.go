@@ -9,6 +9,7 @@ import (
 type User struct {
 	ID        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key"`
 	Name      string    `gorm:"type:varchar(255);not null"`
+	Username  string    `gorm:"uniqueIndex;not null"`
 	Email     string    `gorm:"uniqueIndex;not null"`
 	Password  string    `gorm:"not null"`
 	Role      string    `gorm:"type:varchar(255);not null"`
@@ -21,6 +22,7 @@ type User struct {
 
 type SignUpInput struct {
 	Name            string `json:"name" binding:"required"`
+	Username        string `json:"userName" binding:"required"`
 	Email           string `json:"email" binding:"required"`
 	Password        string `json:"password" binding:"required,min=8"`
 	PasswordConfirm string `json:"passwordConfirm" binding:"required"`
@@ -28,13 +30,14 @@ type SignUpInput struct {
 }
 
 type SignInInput struct {
-	Email    string `json:"email"  binding:"required"`
+	Username string `json:"userName"  binding:"required"`
 	Password string `json:"password"  binding:"required"`
 }
 
 type UserResponse struct {
 	ID        uuid.UUID `json:"id,omitempty"`
 	Name      string    `json:"name,omitempty"`
+	Username  string    `json:"userName,omitempty"`
 	Email     string    `json:"email,omitempty"`
 	Role      string    `json:"role,omitempty"`
 	Photo     string    `json:"photo,omitempty"`

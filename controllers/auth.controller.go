@@ -44,6 +44,7 @@ func (ac *AuthController) SignUpUser(ctx *gin.Context) {
 	now := time.Now()
 	newUser := models.User{
 		Name:      payload.Name,
+		Username:  strings.ToLower(payload.Username),
 		Email:     strings.ToLower(payload.Email),
 		Password:  hashedPassword,
 		Role:      "user",
@@ -59,6 +60,9 @@ func (ac *AuthController) SignUpUser(ctx *gin.Context) {
 	if result.Error != nil && strings.Contains(result.Error.Error(), "duplicate key value violates unique") {
 		ctx.JSON(http.StatusConflict, gin.H{"status": "fail", "message": "User with that email already exists"})
 		return
+	} else if result.Error != nil && strings.Contains(result.Error.Error(), "duplicate key value violates unique") {
+		ctx.JSON(http.StatusConflict, gin.H{"status": "fail", "message": "User with that username already exists"})
+		return
 	} else if result.Error != nil {
 		ctx.JSON(http.StatusBadGateway, gin.H{"status": "error", "message": "Something bad happened"})
 		return
@@ -67,6 +71,7 @@ func (ac *AuthController) SignUpUser(ctx *gin.Context) {
 	userResponse := &models.UserResponse{
 		ID:        newUser.ID,
 		Name:      newUser.Name,
+		Username:  newUser.Username,
 		Email:     newUser.Email,
 		Photo:     newUser.Photo,
 		Role:      newUser.Role,
@@ -86,14 +91,14 @@ func (ac *AuthController) SignInUser(ctx *gin.Context) {
 	}
 
 	var user models.User
-	result := ac.DB.First(&user, "email = ?", strings.ToLower(payload.Email))
+	result := ac.DB.First(&user, "username = ?", strings.ToLower(payload.Username))
 	if result.Error != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"status": "fail", "message": "Invalid email or Password"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"status": "fail", "message": "Invalid username or Password"})
 		return
 	}
 
 	if err := utils.VerifyPassword(user.Password, payload.Password); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"status": "fail", "message": "Invalid email or Password"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"status": "fail", "message": "Invalid username or Password"})
 		return
 	}
 

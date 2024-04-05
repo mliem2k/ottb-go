@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/wpcodevo/golang-gorm-postgres/initializers"
 	"github.com/wpcodevo/golang-gorm-postgres/models"
 	"gorm.io/gorm"
@@ -26,10 +27,11 @@ func NewPostController(DB *gorm.DB) PostController {
 }
 
 func (pc *PostController) CreatePost(ctx *gin.Context) {
-	currentUser := ctx.MustGet("currentUser").(models.User)
+	// currentUser := ctx.MustGet("currentUser").(models.User)
 
 	// Parse form data
 	err := ctx.Request.ParseMultipartForm(10 << 20) // 10 MB max
+
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Failed to parse form data"})
 		return
@@ -38,6 +40,13 @@ func (pc *PostController) CreatePost(ctx *gin.Context) {
 	// Extract other fields from the form
 	title := ctx.Request.FormValue("title")
 	content := ctx.Request.FormValue("content")
+	user := ctx.Request.FormValue("user")
+	parsedUUID, err := uuid.Parse(user)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid user ID"})
+		return
+	}
 
 	// Handle file uploads
 	files := ctx.Request.MultipartForm.File["image"]
@@ -75,7 +84,7 @@ func (pc *PostController) CreatePost(ctx *gin.Context) {
 		Title:     title,
 		Content:   content,
 		Image:     strings.Join(imageNames, ","),
-		UserId:    currentUser.ID,
+		UserId:    parsedUUID,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -171,8 +180,33 @@ func (pc *PostController) FindPostsByUserId(ctx *gin.Context) {
 			"updated_at": post.UpdatedAt.Format(time.RFC3339),
 		})
 	}
+	var updatedResponseData []map[string]interface{}
+	for _, data := range responseData {
+		// Extract the images slice
+		images, ok := data["images"].([]string)
+		if !ok {
+			// If the `images` key is not present or not a []string, skip this item
+			continue
+		}
+		// Iterate over each image URL
+		for _, img := range images {
+			// Create a new map for each image URL
+			newData := map[string]interface{}{
+				"id":         data["id"],
+				"title":      data["title"],
+				"content":    data["content"],
+				"image":      img, // Set the image URL
+				"user_id":    data["user_id"],
+				"created_at": data["created_at"],
+				"updated_at": data["updated_at"],
+			}
 
-	ctx.JSON(http.StatusOK, gin.H{"status": "success", "data": responseData})
+			// Append the new map to the updated response data slice
+			updatedResponseData = append(updatedResponseData, newData)
+		}
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"status": "success", "data": updatedResponseData})
 }
 
 func (pc *PostController) FindPosts(ctx *gin.Context) {

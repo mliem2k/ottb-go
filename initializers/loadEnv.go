@@ -8,7 +8,7 @@ import (
 
 type Config struct {
 	DBHost         string `mapstructure:"POSTGRES_HOST"`
-	DBUserName     string `mapstructure:"POSTGRES_USER"`
+	DBUsername     string `mapstructure:"POSTGRES_USER"`
 	DBUserPassword string `mapstructure:"POSTGRES_PASSWORD"`
 	DBName         string `mapstructure:"POSTGRES_DB"`
 	DBPort         string `mapstructure:"POSTGRES_PORT"`
