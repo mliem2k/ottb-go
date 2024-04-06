@@ -12,8 +12,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/wpcodevo/golang-gorm-postgres/initializers"
-	"github.com/wpcodevo/golang-gorm-postgres/models"
+	"github.com/mliem2k/ottb-go/initializers"
+	"github.com/mliem2k/ottb-go/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )

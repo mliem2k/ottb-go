@@ -6,9 +6,9 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/wpcodevo/golang-gorm-postgres/controllers"
-	"github.com/wpcodevo/golang-gorm-postgres/initializers"
-	"github.com/wpcodevo/golang-gorm-postgres/routes"
+	"github.com/mliem2k/ottb-go/controllers"
+	"github.com/mliem2k/ottb-go/initializers"
+	"github.com/mliem2k/ottb-go/routes"
 )
 
 var (
@@ -73,6 +73,9 @@ func main() {
 	StationRouteController.StationRoute(router)
 	// Serve uploaded files for photos
 	server.Static("/uploads", "./uploads")
-	log.Fatal(server.Run(":" + config.ServerPort))
 
+	// Serve over HTTPS
+	sslCert := "./certificate.crt"
+	sslKey := "./private.key"
+	log.Fatal(server.RunTLS(":"+config.ServerPort, sslCert, sslKey))
 }

@@ -1,4 +1,4 @@
-module github.com/wpcodevo/golang-gorm-postgres
+module github.com/mliem2k/ottb-go
 
 go 1.18
 

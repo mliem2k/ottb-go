@@ -2,8 +2,8 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wpcodevo/golang-gorm-postgres/controllers"
-	// "github.com/wpcodevo/golang-gorm-postgres/middleware"
+	"github.com/mliem2k/ottb-go/controllers"
+	// "github.com/mliem2k/ottb-go/middleware"
 )
 
 type PostRouteController struct {
