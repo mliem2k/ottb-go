@@ -1,22 +1,34 @@
 package initializers
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"log"
 
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	_ "github.com/denisenkom/go-mssqldb"
 )
 
-var DB *gorm.DB
+var DB *sql.DB
 
 func ConnectDB(config *Config) {
-	var err error
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Shanghai", config.DBHost, config.DBUsername, config.DBUserPassword, config.DBName, config.DBPort)
+	// Build connection string
+	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s;database=%s;",
+		config.DBHost, config.DBUsername, config.DBUserPassword, config.DBPort, config.DBName)
 
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	var err error
+	// Create connection pool
+	DB, err = sql.Open("sqlserver", connString)
 	if err != nil {
-		log.Fatal("Failed to connect to the Database")
+		log.Fatal("Error creating connection pool: ", err.Error())
 	}
+
+	// Ping the database to check the connection
+	ctx := context.Background()
+	err = DB.PingContext(ctx)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
 	fmt.Println("🚀 Connected Successfully to the Database")
 }
