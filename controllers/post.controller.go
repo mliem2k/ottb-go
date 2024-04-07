@@ -15,7 +15,6 @@ import (
 	"github.com/mliem2k/ottb-go/initializers"
 	"github.com/mliem2k/ottb-go/models"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 type PostController struct {
@@ -152,7 +151,7 @@ func (pc *PostController) FindPostsByUserId(ctx *gin.Context) {
 	userId := ctx.Param("userId")
 
 	// Set logger to write logs to os.Stdout
-	pc.DB.Logger.LogMode(logger.Info)
+	// pc.DB.Logger.LogMode(logger.Info)
 
 	var posts []models.Post
 	result := pc.DB.Debug().Where("user_id = ?", userId).Find(&posts)

@@ -14,6 +14,12 @@ type Config struct {
 	DBPort         string `mapstructure:"POSTGRES_PORT"`
 	ServerPort     string `mapstructure:"PORT"`
 
+	SmtpServer string `mapstructure:"SMTP_SERVER"`
+	SmtpPort   int    `mapstructure:"SMTP_PORT"`
+	SmtpUser   string `mapstructure:"SMTP_USER"`
+	SmtpPass   string `mapstructure:"SMTP_PASS"`
+	SmtpFrom   string `mapstructure:"SMTP_FROM"`
+
 	ClientOrigin string `mapstructure:"CLIENT_ORIGIN"`
 
 	AccessTokenPrivateKey  string        `mapstructure:"ACCESS_TOKEN_PRIVATE_KEY"`

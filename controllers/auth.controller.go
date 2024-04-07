@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/mliem2k/ottb-go/initializers"
 	"github.com/mliem2k/ottb-go/models"
 	"github.com/mliem2k/ottb-go/utils"
+	"gopkg.in/gomail.v2"
 	"gorm.io/gorm"
 )
 
@@ -23,6 +25,12 @@ func NewAuthController(DB *gorm.DB) AuthController {
 
 // SignUp User
 func (ac *AuthController) SignUpUser(ctx *gin.Context) {
+	// ac.DB.Logger.LogMode(logger.Info)
+	config, err := initializers.LoadConfig(".")
+	if err != nil {
+		log.Fatal("🚀 Could not load environment variables", err)
+	}
+
 	var payload *models.SignUpInput
 
 	if err := ctx.ShouldBindJSON(&payload); err != nil {
@@ -48,7 +56,7 @@ func (ac *AuthController) SignUpUser(ctx *gin.Context) {
 		Email:     strings.ToLower(payload.Email),
 		Password:  hashedPassword,
 		Role:      "user",
-		Verified:  true,
+		Verified:  false,
 		Photo:     payload.Photo,
 		Provider:  "local",
 		CreatedAt: now,
@@ -58,15 +66,62 @@ func (ac *AuthController) SignUpUser(ctx *gin.Context) {
 	result := ac.DB.Create(&newUser)
 
 	if result.Error != nil && strings.Contains(result.Error.Error(), "duplicate key value violates unique") {
-		ctx.JSON(http.StatusConflict, gin.H{"status": "fail", "message": "User with that email already exists"})
-		return
-	} else if result.Error != nil && strings.Contains(result.Error.Error(), "duplicate key value violates unique") {
-		ctx.JSON(http.StatusConflict, gin.H{"status": "fail", "message": "User with that username already exists"})
+		ctx.JSON(http.StatusConflict, gin.H{"status": "fail", "message": "User with that email or username already exists"})
 		return
 	} else if result.Error != nil {
 		ctx.JSON(http.StatusBadGateway, gin.H{"status": "error", "message": "Something bad happened"})
 		return
 	}
+
+	// Set up SMTP server configuration.
+	smtpServer := config.SmtpServer
+	smtpPort := config.SmtpPort
+	username := config.SmtpUser
+	password := config.SmtpPass
+
+	from := config.SmtpFrom
+	to := newUser.Email
+	subject := "Verify your OTTB account"
+	verificationLink := config.ClientOrigin + "/api/auth/verifyemail/" + newUser.ID.String()
+
+	// HTML body content
+	body := `
+	<html>
+	<head>
+		<title>Verify Your OTTB Account</title>
+	</head>
+	<body>
+		<p>Hello,</p>
+		<p>Please click the following link to verify your OTTB account:</p>
+		<p><a href="` + verificationLink + `">Verify Email</a></p>
+		<p>If you didn't request this, please ignore this email.</p>
+		<p>Thank you!</p>
+	</body>
+	</html>
+	`
+
+	// Set up the email message.
+	msg := gomail.NewMessage()
+	msg.SetHeader("From", from)
+	msg.SetHeader("To", to)
+	msg.SetHeader("Subject", subject)
+	msg.SetBody("text/html", body)
+
+	// Set up authentication information.
+	d := gomail.NewDialer(smtpServer, smtpPort, username, password)
+
+	// Send the email.
+	if err := d.DialAndSend(msg); err != nil {
+		log.Println("Failed to send email:", err)
+		// If there's an error, delete the newly created user
+		if deleteErr := ac.DB.Delete(&newUser).Error; deleteErr != nil {
+			log.Println("Failed to delete user:", deleteErr)
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"status": "fail", "message": "Failed to send email."})
+		return
+	}
+
+	log.Println("Email sent successfully!")
 
 	userResponse := &models.UserResponse{
 		ID:        newUser.ID,
@@ -80,6 +135,34 @@ func (ac *AuthController) SignUpUser(ctx *gin.Context) {
 		UpdatedAt: newUser.UpdatedAt,
 	}
 	ctx.JSON(http.StatusCreated, gin.H{"status": "success", "data": gin.H{"user": userResponse}})
+}
+
+func (ac *AuthController) VerifyEmail(ctx *gin.Context) {
+	userId := ctx.Param("userId")
+	var user models.User
+	result := ac.DB.First(&user, "id = ?", userId)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"status": "fail", "message": "Invalid user ID"})
+		return
+	}
+	user.Verified = true
+	ac.DB.Save(&user)
+	htmlResponse := `
+	<html>
+	<head>
+		<title>OTTB Email Verification</title>
+	</head>
+	<body style="font-family: Arial, sans-serif; background-color: #f0f0f0; padding: 20px;">
+		<div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 5px; padding: 20px; box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.1);">
+			<h1 style="color: #333333; text-align: center;">OTTB Email Verified Successfully</h1>
+			<p style="color: #666666; text-align: center;">Your email has been successfully verified.</p>
+		</div>
+	</body>
+	</html>
+`
+
+	ctx.Header("Content-Type", "text/html")
+	ctx.String(http.StatusOK, htmlResponse)
 }
 
 func (ac *AuthController) SignInUser(ctx *gin.Context) {
