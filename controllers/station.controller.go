@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/mliem2k/ottb-go/initializers"
 	"github.com/mliem2k/ottb-go/models"
 	"gorm.io/gorm"
@@ -26,7 +27,7 @@ func NewStationController(DB *gorm.DB) StationController {
 }
 
 func (pc *StationController) CreateStation(ctx *gin.Context) {
-	currentUser := ctx.MustGet("currentUser").(models.User)
+	// currentUser := ctx.MustGet("currentUser").(models.User)
 
 	// Parse form data
 	err := ctx.Request.ParseMultipartForm(10 << 20) // 10 MB max
@@ -39,6 +40,13 @@ func (pc *StationController) CreateStation(ctx *gin.Context) {
 	title := ctx.Request.FormValue("title")
 	content := ctx.Request.FormValue("content")
 	latlong := ctx.Request.FormValue("latlong")
+	user := ctx.Request.FormValue("user")
+	parsedUser, err := uuid.Parse(user)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid user ID"})
+		return
+	}
 
 	// Handle file uploads
 	files := ctx.Request.MultipartForm.File["image"]
@@ -76,7 +84,7 @@ func (pc *StationController) CreateStation(ctx *gin.Context) {
 		Title:     title,
 		Content:   content,
 		Image:     strings.Join(imageNames, ","),
-		UserId:    currentUser.ID,
+		UserId:    parsedUser,
 		LatLong:   latlong,
 		CreatedAt: now,
 		UpdatedAt: now,

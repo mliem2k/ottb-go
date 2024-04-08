@@ -200,9 +200,9 @@ func (ac *AuthController) SignInUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.SetCookie("access_token", access_token, config.AccessTokenMaxAge*60, "/", "api.kejora.my.id", false, true)
-	ctx.SetCookie("refresh_token", refresh_token, config.RefreshTokenMaxAge*60, "/", "api.kejora.my.id", false, true)
-	ctx.SetCookie("logged_in", "true", config.AccessTokenMaxAge*60, "/", "api.kejora.my.id", false, false)
+	ctx.SetCookie("access_token", access_token, config.AccessTokenMaxAge*60, "/", config.ClientOrigin, false, true)
+	ctx.SetCookie("refresh_token", refresh_token, config.RefreshTokenMaxAge*60, "/", config.ClientOrigin, false, true)
+	ctx.SetCookie("logged_in", "true", config.AccessTokenMaxAge*60, "/", config.ClientOrigin, false, false)
 
 	ctx.JSON(http.StatusOK, gin.H{"status": "success", "access_token": access_token})
 }
@@ -239,16 +239,20 @@ func (ac *AuthController) RefreshAccessToken(ctx *gin.Context) {
 		return
 	}
 
-	ctx.SetCookie("access_token", access_token, config.AccessTokenMaxAge*60, "/", "api.kejora.my.id", false, true)
-	ctx.SetCookie("logged_in", "true", config.AccessTokenMaxAge*60, "/", "api.kejora.my.id", false, false)
+	ctx.SetCookie("access_token", access_token, config.AccessTokenMaxAge*60, "/", config.ClientOrigin, false, true)
+	ctx.SetCookie("logged_in", "true", config.AccessTokenMaxAge*60, "/", config.ClientOrigin, false, false)
 
 	ctx.JSON(http.StatusOK, gin.H{"status": "success", "access_token": access_token})
 }
 
 func (ac *AuthController) LogoutUser(ctx *gin.Context) {
-	ctx.SetCookie("access_token", "", -1, "/", "api.kejora.my.id", false, true)
-	ctx.SetCookie("refresh_token", "", -1, "/", "api.kejora.my.id", false, true)
-	ctx.SetCookie("logged_in", "", -1, "/", "api.kejora.my.id", false, false)
+	config, err := initializers.LoadConfig(".")
+	if err != nil {
+		log.Fatal("🚀 Could not load environment variables", err)
+	}
+	ctx.SetCookie("access_token", "", -1, "/", config.ClientOrigin, false, true)
+	ctx.SetCookie("refresh_token", "", -1, "/", config.ClientOrigin, false, true)
+	ctx.SetCookie("logged_in", "", -1, "/", config.ClientOrigin, false, false)
 
 	ctx.JSON(http.StatusOK, gin.H{"status": "success"})
 }

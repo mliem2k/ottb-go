@@ -3,7 +3,6 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/mliem2k/ottb-go/controllers"
-	"github.com/mliem2k/ottb-go/middleware"
 )
 
 type StationRouteController struct {
@@ -17,9 +16,9 @@ func NewRouteStationController(stationController controllers.StationController) 
 func (pc *StationRouteController) StationRoute(rg *gin.RouterGroup) {
 
 	router := rg.Group("stations")
-	router.Use(middleware.DeserializeUser())
-	router.POST("/", pc.stationController.CreateStation)
-	router.GET("/", pc.stationController.FindStations)
+	// router.Use(middleware.DeserializeUser())
+	router.POST("", pc.stationController.CreateStation)
+	router.GET("", pc.stationController.FindStations)
 	router.PUT("/:stationId", pc.stationController.UpdateStation)
 	router.GET("/:stationId", pc.stationController.FindStationById)
 	router.DELETE("/:stationId", pc.stationController.DeleteStation)

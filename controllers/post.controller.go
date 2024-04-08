@@ -2,10 +2,7 @@ package controllers
 
 import (
 	"fmt"
-	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -38,52 +35,62 @@ func (pc *PostController) CreatePost(ctx *gin.Context) {
 
 	// Extract other fields from the form
 	title := ctx.Request.FormValue("title")
-	content := ctx.Request.FormValue("content")
+	// content := ctx.Request.FormValue("content")
 	user := ctx.Request.FormValue("user")
-	parsedUUID, err := uuid.Parse(user)
+	stationId := ctx.Request.FormValue("stationId")
+
+	parsedUser, err := uuid.Parse(user)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid user ID"})
 		return
 	}
+	parsedStationId, err := uuid.Parse(stationId)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid station ID"})
+		return
+	}
 
 	// Handle file uploads
-	files := ctx.Request.MultipartForm.File["image"]
-	var imageNames []string
-	for _, fileHeader := range files {
-		file, err := fileHeader.Open()
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Failed to get image file"})
-			return
-		}
-		defer file.Close()
+	// files := ctx.Request.MultipartForm.File["image"]
+	// var imageNames []string
+	// for _, fileHeader := range files {
+	// 	file, err := fileHeader.Open()
+	// 	if err != nil {
+	// 		ctx.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Failed to get image file"})
+	// 		return
+	// 	}
+	// 	defer file.Close()
 
-		// Save uploaded file to server with timestamp
-		currentTime := time.Now().UnixNano()
-		imageExtension := filepath.Ext(fileHeader.Filename)
-		imageName := fmt.Sprintf("%d%s", currentTime, imageExtension)
-		filePath := "uploads/" + imageName
-		outFile, err := os.Create(filePath)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to save image file"})
-			return
-		}
-		defer outFile.Close()
-		_, err = io.Copy(outFile, file)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to save image file"})
-			return
-		}
-		imageNames = append(imageNames, imageName)
-	}
+	// 	// Save uploaded file to server with timestamp
+	// 	currentTime := time.Now().UnixNano()
+	// 	imageExtension := filepath.Ext(fileHeader.Filename)
+	// 	imageName := fmt.Sprintf("%d%s", currentTime, imageExtension)
+	// 	filePath := "uploads/" + imageName
+	// 	outFile, err := os.Create(filePath)
+	// 	if err != nil {
+	// 		ctx.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to save image file"})
+	// 		return
+	// 	}
+	// 	defer outFile.Close()
+	// 	_, err = io.Copy(outFile, file)
+	// 	if err != nil {
+	// 		ctx.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to save image file"})
+	// 		return
+	// 	}
+	// 	imageNames = append(imageNames, imageName)
+	// }
 
 	// Create new post object
 	now := time.Now()
 	newPost := models.Post{
-		Title:     title,
-		Content:   content,
-		Image:     strings.Join(imageNames, ","),
-		UserId:    parsedUUID,
+		Title: title,
+		// Content:   content,
+		// Image:     strings.Join(imageNames, ","),
+		Developed: false,
+		UserId:    parsedUser,
+		StationId: parsedStationId,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -152,9 +159,9 @@ func (pc *PostController) FindPostsByUserId(ctx *gin.Context) {
 
 	// Set logger to write logs to os.Stdout
 	// pc.DB.Logger.LogMode(logger.Info)
-
 	var posts []models.Post
-	result := pc.DB.Debug().Where("user_id = ?", userId).Find(&posts)
+	result := pc.DB.Debug().Where("user_id = ? AND image <> '' AND developed = ?", userId, true).Find(&posts)
+
 	if result.Error != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to find posts"})
 		return
@@ -209,15 +216,24 @@ func (pc *PostController) FindPostsByUserId(ctx *gin.Context) {
 }
 
 func (pc *PostController) FindPosts(ctx *gin.Context) {
+	// pc.DB.Logger.LogMode(logger.Info)
 	var page = ctx.DefaultQuery("page", "1")
 	var limit = ctx.DefaultQuery("limit", "10")
+
+	developed := ctx.Query("developed")
+	fmt.Println(developed)
 
 	intPage, _ := strconv.Atoi(page)
 	intLimit, _ := strconv.Atoi(limit)
 	offset := (intPage - 1) * intLimit
 
 	var posts []models.Post
-	results := pc.DB.Limit(intLimit).Offset(offset).Find(&posts)
+	var results *gorm.DB
+	if developed != "" {
+		results = pc.DB.Where("developed = ?", developed).Limit(intLimit).Offset(offset).Find(&posts)
+	} else {
+		results = pc.DB.Limit(intLimit).Offset(offset).Find(&posts)
+	}
 	if results.Error != nil {
 		ctx.JSON(http.StatusBadGateway, gin.H{"status": "error", "message": results.Error})
 		return

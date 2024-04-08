@@ -56,7 +56,8 @@ func main() {
 	}
 
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{"*", "http://172.17.0.1", config.ClientOrigin}
+	 corsConfig.AllowOrigins = []string{"*", "http://172.17.0.1", config.ClientOrigin}
+//	corsConfig.AllowOrigins = []string{config.ClientOrigin}
 	corsConfig.AllowCredentials = true
 
 	server.Use(cors.New(corsConfig))
@@ -75,7 +76,8 @@ func main() {
 	server.Static("/uploads", "./uploads")
 
 	// Serve over HTTPS
-	sslCert := "./certificate.crt"
-	sslKey := "./private.key"
-	log.Fatal(server.RunTLS(":"+config.ServerPort, sslCert, sslKey))
+	 sslCert := "./certificate.crt"
+	 sslKey := "./private.key"
+	 log.Fatal(server.RunTLS(":"+config.ServerPort, sslCert, sslKey))
+//	log.Fatal(server.Run(":" + "8000"))
 }

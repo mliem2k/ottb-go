@@ -9,8 +9,10 @@ import (
 type Post struct {
 	ID        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key" json:"id,omitempty"`
 	Title     string    `gorm:"not null" json:"title,omitempty"`
-	Content   string    `gorm:"not null" json:"content,omitempty"`
-	Image     string    `gorm:"not null" json:"image,omitempty"`
+	Content   string    `gorm:"null" json:"content,omitempty"`
+	Image     string    `gorm:"null" json:"image,omitempty"`
+	Developed bool      `gorm:"null" json:"developed,omitempty"`
+	StationId uuid.UUID `gorm:"null" json:"station_id,omitempty"`
 	UserId    uuid.UUID `gorm:"not null" json:"user_id,omitempty"`
 	CreatedAt time.Time `gorm:"not null" json:"created_at,omitempty"`
 	UpdatedAt time.Time `gorm:"not null" json:"updated_at,omitempty"`
