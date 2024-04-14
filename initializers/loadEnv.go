@@ -21,6 +21,7 @@ type Config struct {
 	SmtpFrom   string `mapstructure:"SMTP_FROM"`
 
 	ClientOrigin string `mapstructure:"CLIENT_ORIGIN"`
+	ServerOrigin string `mapstructure:"SERVER_ORIGIN"`
 
 	AccessTokenPrivateKey  string        `mapstructure:"ACCESS_TOKEN_PRIVATE_KEY"`
 	AccessTokenPublicKey   string        `mapstructure:"ACCESS_TOKEN_PUBLIC_KEY"`

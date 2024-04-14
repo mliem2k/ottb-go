@@ -22,5 +22,4 @@ func (pc *StationRouteController) StationRoute(rg *gin.RouterGroup) {
 	router.PUT("/:stationId", pc.stationController.UpdateStation)
 	router.GET("/:stationId", pc.stationController.FindStationById)
 	router.DELETE("/:stationId", pc.stationController.DeleteStation)
-	router.GET("/users/:userId/stations", pc.stationController.FindStationsByUserId)
 }

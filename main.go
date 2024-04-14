@@ -56,8 +56,9 @@ func main() {
 	}
 
 	corsConfig := cors.DefaultConfig()
-	 corsConfig.AllowOrigins = []string{"*", "http://172.17.0.1", config.ClientOrigin}
-//	corsConfig.AllowOrigins = []string{config.ClientOrigin}
+	corsConfig.AllowOrigins = []string{"*", "http://localhost:3000", config.ClientOrigin}
+	//	corsConfig.AllowOrigins = []string{config.ServerOrigin}
+	corsConfig.ExposeHeaders = []string{"Access-Control-Allow-Origin"}
 	corsConfig.AllowCredentials = true
 
 	server.Use(cors.New(corsConfig))
@@ -72,12 +73,13 @@ func main() {
 	UserRouteController.UserRoute(router)
 	PostRouteController.PostRoute(router)
 	StationRouteController.StationRoute(router)
+
 	// Serve uploaded files for photos
 	server.Static("/uploads", "./uploads")
 
 	// Serve over HTTPS
-	 sslCert := "./certificate.crt"
-	 sslKey := "./private.key"
-	 log.Fatal(server.RunTLS(":"+config.ServerPort, sslCert, sslKey))
-//	log.Fatal(server.Run(":" + "8000"))
+	sslCert := "./certificate.crt"
+	sslKey := "./private.key"
+	log.Fatal(server.RunTLS(":"+config.ServerPort, sslCert, sslKey))
+	// log.Fatal(server.Run(":" + "8000"))
 }

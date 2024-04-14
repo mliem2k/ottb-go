@@ -82,7 +82,7 @@ func (ac *AuthController) SignUpUser(ctx *gin.Context) {
 	from := config.SmtpFrom
 	to := newUser.Email
 	subject := "Verify your OTTB account"
-	verificationLink := config.ClientOrigin + "/api/auth/verifyemail/" + newUser.ID.String()
+	verificationLink := config.ServerOrigin + "/api/auth/verifyemail/" + newUser.ID.String()
 
 	// HTML body content
 	body := `
@@ -200,9 +200,9 @@ func (ac *AuthController) SignInUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.SetCookie("access_token", access_token, config.AccessTokenMaxAge*60, "/", config.ClientOrigin, false, true)
-	ctx.SetCookie("refresh_token", refresh_token, config.RefreshTokenMaxAge*60, "/", config.ClientOrigin, false, true)
-	ctx.SetCookie("logged_in", "true", config.AccessTokenMaxAge*60, "/", config.ClientOrigin, false, false)
+	ctx.SetCookie("access_token", access_token, config.AccessTokenMaxAge*60, "/", config.ServerOrigin, false, true)
+	ctx.SetCookie("refresh_token", refresh_token, config.RefreshTokenMaxAge*60, "/", config.ServerOrigin, false, true)
+	ctx.SetCookie("logged_in", "true", config.AccessTokenMaxAge*60, "/", config.ServerOrigin, false, false)
 
 	ctx.JSON(http.StatusOK, gin.H{"status": "success", "access_token": access_token})
 }
@@ -239,8 +239,8 @@ func (ac *AuthController) RefreshAccessToken(ctx *gin.Context) {
 		return
 	}
 
-	ctx.SetCookie("access_token", access_token, config.AccessTokenMaxAge*60, "/", config.ClientOrigin, false, true)
-	ctx.SetCookie("logged_in", "true", config.AccessTokenMaxAge*60, "/", config.ClientOrigin, false, false)
+	ctx.SetCookie("access_token", access_token, config.AccessTokenMaxAge*60, "/", config.ServerOrigin, false, true)
+	ctx.SetCookie("logged_in", "true", config.AccessTokenMaxAge*60, "/", config.ServerOrigin, false, false)
 
 	ctx.JSON(http.StatusOK, gin.H{"status": "success", "access_token": access_token})
 }
@@ -250,9 +250,9 @@ func (ac *AuthController) LogoutUser(ctx *gin.Context) {
 	if err != nil {
 		log.Fatal("🚀 Could not load environment variables", err)
 	}
-	ctx.SetCookie("access_token", "", -1, "/", config.ClientOrigin, false, true)
-	ctx.SetCookie("refresh_token", "", -1, "/", config.ClientOrigin, false, true)
-	ctx.SetCookie("logged_in", "", -1, "/", config.ClientOrigin, false, false)
+	ctx.SetCookie("access_token", "", -1, "/", config.ServerOrigin, false, true)
+	ctx.SetCookie("refresh_token", "", -1, "/", config.ServerOrigin, false, true)
+	ctx.SetCookie("logged_in", "", -1, "/", config.ServerOrigin, false, false)
 
 	ctx.JSON(http.StatusOK, gin.H{"status": "success"})
 }

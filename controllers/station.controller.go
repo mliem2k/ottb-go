@@ -7,15 +7,12 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/mliem2k/ottb-go/initializers"
 	"github.com/mliem2k/ottb-go/models"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 type StationController struct {
@@ -37,8 +34,7 @@ func (pc *StationController) CreateStation(ctx *gin.Context) {
 	}
 
 	// Extract other fields from the form
-	title := ctx.Request.FormValue("title")
-	content := ctx.Request.FormValue("content")
+	name := ctx.Request.FormValue("name")
 	latlong := ctx.Request.FormValue("latlong")
 	user := ctx.Request.FormValue("user")
 	parsedUser, err := uuid.Parse(user)
@@ -81,9 +77,7 @@ func (pc *StationController) CreateStation(ctx *gin.Context) {
 	// Create new station object
 	now := time.Now()
 	newStation := models.Station{
-		Title:     title,
-		Content:   content,
-		Image:     strings.Join(imageNames, ","),
+		Name:      name,
 		UserId:    parsedUser,
 		LatLong:   latlong,
 		CreatedAt: now,
@@ -117,9 +111,7 @@ func (pc *StationController) UpdateStation(ctx *gin.Context) {
 	}
 	now := time.Now()
 	stationToUpdate := models.Station{
-		Title:     payload.Title,
-		Content:   payload.Content,
-		Image:     payload.Image,
+		Name:      payload.Name,
 		UserId:    currentUser.ID,
 		CreatedAt: updatedStation.CreatedAt,
 		UpdatedAt: now,
@@ -141,48 +133,6 @@ func (pc *StationController) FindStationById(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"status": "success", "data": station})
-}
-
-func (pc *StationController) FindStationsByUserId(ctx *gin.Context) {
-	config, err := initializers.LoadConfig(".")
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to load config"})
-		return
-	}
-
-	userId := ctx.Param("userId")
-
-	// Set logger to write logs to os.Stdout
-	pc.DB.Logger.LogMode(logger.Info)
-
-	var stations []models.Station
-	result := pc.DB.Debug().Where("user_id = ?", userId).Find(&stations)
-	if result.Error != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to find stations"})
-		return
-	}
-
-	// Create a new JSON structure without using struct images
-	var responseData []map[string]interface{}
-	for _, station := range stations {
-		images := strings.Split(station.Image, ",")
-		var formattedImages []string
-		for _, image := range images {
-			formattedImages = append(formattedImages, config.ClientOrigin+"/uploads/"+image)
-		}
-
-		responseData = append(responseData, map[string]interface{}{
-			"id":         station.ID,
-			"title":      station.Title,
-			"content":    station.Content,
-			"images":     formattedImages,
-			"user_id":    station.UserId,
-			"created_at": station.CreatedAt.Format(time.RFC3339),
-			"updated_at": station.UpdatedAt.Format(time.RFC3339),
-		})
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"status": "success", "data": responseData})
 }
 
 func (pc *StationController) FindStations(ctx *gin.Context) {

@@ -5,9 +5,6 @@ WORKDIR /app
 # Copy the contents of the current directory to the /app directory in the image
 COPY . .
 
-# Delete the contents of the uploads folder
-RUN rm -rf uploads/*
-
 # Download module dependencies
 RUN go mod download
 
@@ -16,9 +13,6 @@ RUN go build -o /main
 
 # Expose port 8000
 EXPOSE 8000
-
-# Create a volume for the uploads directory
-VOLUME /app/uploads
 
 # Specify the command to run on container start
 CMD ["/main"]

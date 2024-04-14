@@ -1,5 +1,8 @@
 root = "."
 tmp_dir = "tmp"
-build_cmd = "go build -o ./tmp/main ."
-run_cmd = ["./tmp/main"]
-exclude_dir = ["assets", "tmp", "vendor"]
+
+[build]
+  args_bin = []
+  bin = "tmp\\main.exe"
+  cmd = "go build -o ./tmp/main.exe ."
+  exclude_dir = ["uploads", "tmp", "middleware", "initializers","migrate","utils"]
